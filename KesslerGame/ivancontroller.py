@@ -14,12 +14,11 @@ from skfuzzy import control as ctrl
 import math
 import numpy as np
 import matplotlib as plt
-from ivan_defs import calc_dist,asteroid_within_radius
-
+from ivan_defs import relative_pos,time_to_col
+from kesslergame.asteroid import Asteroid
 
 
 class IvanController(KesslerController):
-    
     
         
     def __init__(self):
@@ -29,7 +28,7 @@ class IvanController(KesslerController):
         # Declare variables
         bullet_time = ctrl.Antecedent(np.arange(0,1.0,0.002), 'bullet_time')
         theta_delta = ctrl.Antecedent(np.arange(-1*math.pi,math.pi,0.1), 'theta_delta') # Radians due to Python
-        ship_turn = ctrl.Consequent(np.arange(-180,180,0.5), 'ship_turn') # Degrees due to Kessler
+        ship_turn = ctrl.Consequent(np.arange(-180,180,1), 'ship_turn') # Degrees due to Kessler
         ship_fire = ctrl.Consequent(np.arange(-1,1,0.1), 'ship_fire')
         
         #Declare fuzzy sets for bullet_time (how long it takes for the bullet to reach the intercept point)
@@ -78,9 +77,7 @@ class IvanController(KesslerController):
         #theta_delta.view()
         #ship_turn.view()
         #ship_fire.view()
-     
-     
-        
+
         # Declare the fuzzy controller, add the rules 
         # This is an instance variable, and thus available for other methods in the same object. See notes.                         
         # self.targeting_control = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9, rule10, rule11, rule12, rule13, rule14, rule15])
@@ -101,8 +98,66 @@ class IvanController(KesslerController):
         self.targeting_control.addrule(rule13)
         self.targeting_control.addrule(rule14)
         self.targeting_control.addrule(rule15)
+
+        #Start of Ivan's Fuzzy Logic for Evade Mode
+        rel_ast_dist = ctrl.Antecedent(np.arange(0,700,701),'ast_d')
+        rel_ast_angl = ctrl.Antecedent(np.arange(-1*math.pi,math.pi,0.1), 'ast_a')
+        t_to_col = ctrl.Antecedent(np.arange(0,10,11),'t_col')
+        ship_thrust = ctrl.Consequent(np.arange(0,450,451),'thrust')
+
+        rel_ast_dist['NL'] = fuzz.zmf(rel_ast_dist.universe,0,100)
+        rel_ast_dist['NS'] = fuzz.trimf(rel_ast_dist.universe, [50,150,250])
+        rel_ast_dist['Z'] = fuzz.trimf(rel_ast_dist.universe, [250,350,450])
+        rel_ast_dist['PS'] = fuzz.trimf(rel_ast_dist.universe, [450,550,650])
+        rel_ast_dist['PL'] = fuzz.smf(rel_ast_dist.universe,600,700)
+
+        rel_ast_angl['NL'] = fuzz.zmf(rel_ast_angl.universe, -1*math.pi/3,-1*math.pi/6)
+        rel_ast_angl['NS'] = fuzz.trimf(rel_ast_angl.universe, [-1*math.pi/3,-1*math.pi/6,0])
+        rel_ast_angl['Z'] = fuzz.trimf(rel_ast_angl.universe, [-1*math.pi/6,0,math.pi/6])
+        rel_ast_angl['PS'] = fuzz.trimf(rel_ast_angl.universe, [0,math.pi/6,math.pi/3])
+        rel_ast_angl['PL'] = fuzz.smf(rel_ast_angl.universe,math.pi/6,math.pi/3)
         
+        t_to_col['S'] = fuzz.trimf(t_to_col.universe,[0,0,2])
+        t_to_col['M'] = fuzz.trimf(t_to_col.universe, [1,3,5])
+        t_to_col['L'] = fuzz.smf(t_to_col.universe,5,7)
+          
+        ship_thrust['NL'] = fuzz.zmf(ship_thrust.universe,0,100)
+        ship_thrust['NS'] = fuzz.trimf(ship_thrust.universe, [50,150,200])
+        ship_thrust['Z'] = fuzz.trimf(ship_thrust.universe, [175,250,300])
+        ship_thrust['PS'] = fuzz.trimf(ship_thrust.universe, [275,350,400])
+        ship_thrust['PL'] = fuzz.smf(ship_thrust.universe,375,400)
+
+        #Declare fuzzy sets for theta_delta (degrees of turn needed to reach the calculated firing angle)
+        #theta_delta['NL'] = fuzz.zmf(theta_delta.universe, -1*math.pi/3,-1*math.pi/6)
+        #theta_delta['NS'] = fuzz.trimf(theta_delta.universe, [-1*math.pi/3,-1*math.pi/6,0])
+        #theta_delta['Z'] = fuzz.trimf(theta_delta.universe, [-1*math.pi/6,0,math.pi/6])
+        #theta_delta['PS'] = fuzz.trimf(theta_delta.universe, [0,math.pi/6,math.pi/3])
+        #theta_delta['PL'] = fuzz.smf(theta_delta.universe,math.pi/6,math.pi/3)
         
+        #Declare fuzzy sets for the ship_turn consequent; this will be returned as turn_rate.
+        #ship_turn['NL'] = fuzz.trimf(ship_turn.universe, [-180,-180,-30])
+        #ship_turn['NS'] = fuzz.trimf(ship_turn.universe, [-90,-30,0])
+        #ship_turn['Z'] = fuzz.trimf(shi                #Declare each fuzzy rulep_turn.universe, [-30,0,30])
+        #ship_turn['PS'] = fuzz.trimf(ship_turn.universe, [& rel_ast_angl['NL']0,30,90])
+        #ship_turn['PL'] = fuzz.trimf(ship_turn.universe, [& rel_ast_angl['NS']30,180,180])
+
+                #Declare each fuzzy rule& rel_ast_angl['PS']
+        #rule1 = ctrl.Rule(t_to_col['L'] & rel_ast_angl['NL'] & rel_ast_dist['PL'] 
+        #rule2 = ctrl.Rule(t_to_col['L'] & rel_ast_angl['NS'] & rel_ast_dist['NL']
+        #rule3 = ctrl.Rule(t_to_col['L'] & rel_ast_angl['Z'] & rel_ast_dist['NS']
+        #rule4 = ctrl.Rule(t_to_col['L'] & rel_ast_angl['PS'] & rel_ast_dist['Z']
+        #rule5 = ctrl.Rule(t_to_col['L'] & rel_ast_angl['PL'] & rel_ast_dist['PS']  
+        #rule6 = ctrl.Rule(t_to_col['M'] & rel_ast_angl['NL'] & rel_ast_dist['PL']
+        #rule7 = ctrl.Rule(t_to_col['M'] & rel_ast_angl['NS'] & rel_ast_dist['NL']
+        #rule8 = ctrl.Rule(t_to_col['M'] & rel_ast_angl['Z']  & rel_ast_dist['NS']
+        #rule9 = ctrl.Rule(t_to_col['M'] & rel_ast_angl['PS'] & rel_ast_dist['Z']
+        #rule10 = ctrl.Rule(t_to_col['M'] & rel_ast_angl['PL'] & rel_ast_dist['PS']
+        #rule11 = ctrl.Rule(t_to_col['S'] & rel_ast_angl['NL'] & rel_ast_dist['PL']
+        #rule12 = ctrl.Rule(t_to_col['S'] & rel_ast_angl['NS'] & rel_ast_dist['PL']              #Declare each fuzzy rule
+        #rule13 = ctrl.Rule(t_to_col['S'] & rel_ast_angl['Z'] & rel_ast_dist['PL']
+        #rule14 = ctrl.Rule(t_to_col['S'] & rel_ast_angl['PS'] & rel_ast_dist['PL']
+        #rule15 = ctrl.Rule(t_to_col['S'] & rel_ast_angl['PL'] & rel_ast_dist['PL']
+
 
     def actions(self, ship_state: Dict, game_state: Dict) -> Tuple[float, float, bool]:
         """
@@ -132,26 +187,45 @@ class IvanController(KesslerController):
         
         for a in game_state["asteroids"]:
             #Loop through all asteroids, find minimum Eudlidean distance
-            curr_dist = math.sqrt((ship_pos_x - a["position"][0])**2 + (ship_pos_y - a["position"][1])**2)
+            relative = relative_pos(a["position"][0], a["position"][1], a["velocity"][0], a["velocity"][1], ship_state["position"][0], ship_state["position"][1], ship_state["velocity"][0], ship_state["velocity"][1])
+            t = time_to_col(a["position"][0], a["position"][1], a["velocity"][0], a["velocity"][1], ship_state["position"][0], ship_state["position"][1], ship_state["velocity"][0], ship_state["velocity"][1])
             if closest_asteroid is None :
                 # Does not yet exist, so initialize first asteroid as the minimum. Ugh, how to do?
-                closest_asteroid = dict(aster = a, dist = curr_dist)
-                
+                closest_asteroid = dict(aster = a, dist = relative[0],dot = relative[1], ti = t)  
             else:    
-                # closest_asteroid exists, and is thus initialized. 
-                if closest_asteroid["dist"] > curr_dist:
+                # closest_asteroid exists, and is thus initialized.
+                if((round(t[0], 2) == round(t[1], 2)) & (closest_asteroid["ti"][0] > t[0])):
+                    closest_asteroid["aster"] = a
+                    closest_asteroid["dist"] = relative[0]
+                    closest_asteroid["dot"] = relative[1]
+                    closest_asteroid["ti"] = t
+                elif ((closest_asteroid["dist"] > relative[0]) & (relative[1] <= 0)):
                     # New minimum found
                     closest_asteroid["aster"] = a
-                    closest_asteroid["dist"] = curr_dist
+                    closest_asteroid["dist"] = relative[0]
+                    closest_asteroid["dot"] = relative[1]
+                    closest_asteroid["ti"] = t
 
         # closest_asteroid is now the nearest asteroid object. 
         # Calculate intercept time given ship & asteroid position, asteroid velocity vector, bullet speed (not direction).
         # Based on Law of Cosines calculation, see notes.
-        
+        print(closest_asteroid["dist"], closest_asteroid["dot"])
+        danger_low = ((closest_asteroid["dist"] + closest_asteroid["aster"]["radius"])<200)
+        danger_medium = ((closest_asteroid["dist"] + closest_asteroid["aster"]["radius"])<150)
+        danger_high = ((closest_asteroid["dist"] + closest_asteroid["aster"]["radius"])<100)
+ 
+        if(danger_low):
+            if(danger_medium):
+                if(danger_high):
+                    print("DangerHigh")
+                    print(closest_asteroid["ti"])
+                else:
+                    print("DangerMedium")
+            else:
+                print("DangerLow")
         # Side D of the triangle is given by closest_asteroid.dist. Need to get the asteroid-ship direction
         #    and the angle of the asteroid's current movement.
         # REMEMBER TRIG FUNCTIONS ARE ALL IN RADAINS!!!
-        
         
         asteroid_ship_x = ship_pos_x - closest_asteroid["aster"]["position"][0]
         asteroid_ship_y = ship_pos_y - closest_asteroid["aster"]["position"][1]
@@ -171,7 +245,7 @@ class IvanController(KesslerController):
         # Combine the Law of Cosines with the quadratic formula for solve for intercept time. Remember, there are two values produced.
         intrcpt1 = ((2 * closest_asteroid["dist"] * asteroid_vel * cos_my_theta2) + math.sqrt(targ_det)) / (2 * (asteroid_vel**2 -bullet_speed**2))
         intrcpt2 = ((2 * closest_asteroid["dist"] * asteroid_vel * cos_my_theta2) - math.sqrt(targ_det)) / (2 * (asteroid_vel**2-bullet_speed**2))
-        
+
         # Take the smaller intercept time, as long as it is positive; if not, take the larger one.
         if intrcpt1 > intrcpt2:
             if intrcpt2 >= 0:
@@ -195,25 +269,26 @@ class IvanController(KesslerController):
         
         # Wrap all angles to (-pi, pi)
         shooting_theta = (shooting_theta + math.pi) % (2 * math.pi) - math.pi
-        
+
+        #Speed up the theta angle
+        if (shooting_theta <= 0):
+          shooting_theta = shooting_theta-((math.pi/180)*10)
+        else:
+           shooting_theta = shooting_theta+((math.pi/180)*10)
+
         # Pass the inputs to the rulebase and fire it
         shooting = ctrl.ControlSystemSimulation(self.targeting_control,flush_after_run=1)
-        
         shooting.input['bullet_time'] = bullet_t
-        shooting.input['theta_delta'] = shooting_theta 
-        
+        shooting.input['theta_delta'] = shooting_theta
         shooting.compute()
-        
+        thrust = 0
         # Get the defuzzified outputs
         turn_rate = shooting.output['ship_turn']
-        
         if shooting.output['ship_fire'] >= 0:
             fire = True
         else:
-            fire = False
-               
-        # And return your three outputs to the game simulation. Controller algorithm complete.
-        thrust = 0.0
+            fire = False  
+        
         
         self.eval_frames +=1
         
@@ -224,4 +299,4 @@ class IvanController(KesslerController):
 
     @property
     def name(self) -> str:
-        return "Ivan Controller"
+        return "Tester Controller"

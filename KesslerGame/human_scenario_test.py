@@ -8,12 +8,13 @@ import time
 from src.kesslergame import Scenario, KesslerGame, GraphicsType,TrainerEnvironment
 from scottdickcontroller import ScottDickController
 from ivancontroller_copy import IvanControllercopy
+from ivancontroller import IvanController
 from test_controller import TestController
 from graphics_both import GraphicsBoth
 
 
 my_test_scenario = Scenario(name='Test Scenario',
-                            num_asteroids=8,
+                            num_asteroids=15,
                             ship_states=[
                                 {'position': (400, 400), 'angle': 90, 'lives': 3, 'team': 1}
                             ],
@@ -30,7 +31,7 @@ game = KesslerGame(settings=game_settings)  # Use this to visualize the game sce
 #game = TrainerEnvironment(settings=game_settings)  # Use this for max-speed, no-graphics simulation
 
 pre = time.perf_counter()
-score, perf_data = game.run(scenario=my_test_scenario, controllers = [IvanControllercopy()])
+score, perf_data = game.run(scenario=my_test_scenario, controllers = [IvanController()])
 
 print('Scenario eval time: '+str(time.perf_counter()-pre))
 print(score.stop_reason)
@@ -39,3 +40,4 @@ print('Deaths: ' + str([team.deaths for team in score.teams]))
 print('Accuracy: ' + str([team.accuracy for team in score.teams]))
 print('Mean eval time: ' + str([team.mean_eval_time for team in score.teams]))
 print('Evaluated frames: ' + str([controller.eval_frames for controller in score.final_controllers]))
+

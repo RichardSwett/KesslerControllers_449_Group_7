@@ -5,17 +5,21 @@ import numpy as np
 
 def calc_dist(x1, y1, x2, y2):
     return (math.sqrt((x1 - x2)**2 + (y1 - y2)**2))
+
+def time_to_col(ast_x, ast_y, ast_v_x, ast_v_y, space_x, space_y, space_v_x, space_v_y):
+    time = np.subtract([ast_x,ast_y],[space_x,space_y])/np.subtract([ast_v_x,ast_v_y],[space_v_x,space_v_y]) 
+    return time
         
 def relative_pos(ast_x, ast_y, ast_v_x, ast_v_y, space_x, space_y, space_v_x, space_v_y):
     # Calculate relative position vector
-    relative_pos_x = ast_x - space_x
-    relative_pos_y = ast_y - space_y
+    relative_pos_x = space_x - ast_x
+    relative_pos_y = space_y - ast_y
     # Calculate relative velocity components
-    relative_vel_x = ast_v_x - space_v_x        
-    relative_vel_y = ast_v_y - space_v_y
+    relative_vel_x = space_v_x - ast_v_x
+    relative_vel_y = space_v_y - ast_v_y
 
     #Return dot product
-    dot_product = relative_pos_x * relative_vel_x + relative_pos_y * relative_vel_y
+    dot_product = relative_pos_x * relative_vel_x*1/30 + relative_pos_y * relative_vel_y*1/30
     # Predict future position of the asteroid
     future_ast_x = ast_x + relative_vel_x*1/30
     future_ast_y = ast_y + relative_vel_y*1/30

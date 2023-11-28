@@ -233,13 +233,13 @@ class IvanControllercopy(KesslerController):
         if (danger_high | danger_medium | danger_low):
             avoid_mode = 1 
             if(danger_high & danger_medium & danger_low):
-                max_thrust = 250
+                max_thrust = 200
                 print("Speedy BOI")
             elif(danger_medium&danger_low):
                 max_thrust = 200
                 print("Medium Speed")
             elif(danger_low):
-                max_thrust = 150
+                max_thrust = 200
                 print("Slow Boi")
         else:
             avoid_mode = 0
