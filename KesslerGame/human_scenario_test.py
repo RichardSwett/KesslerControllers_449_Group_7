@@ -14,12 +14,12 @@ from graphics_both import GraphicsBoth
 
 
 my_test_scenario = Scenario(name='Test Scenario',
-                            num_asteroids=15,
+                            num_asteroids=10,
                             ship_states=[
                                 {'position': (400, 400), 'angle': 90, 'lives': 3, 'team': 1}
                             ],
                             map_size=(1000, 800),
-                            time_limit=60,
+                            time_limit=120,
                             ammo_limit_multiplier=0,
                             stop_if_no_ammo=False)
 
@@ -40,4 +40,3 @@ print('Deaths: ' + str([team.deaths for team in score.teams]))
 print('Accuracy: ' + str([team.accuracy for team in score.teams]))
 print('Mean eval time: ' + str([team.mean_eval_time for team in score.teams]))
 print('Evaluated frames: ' + str([controller.eval_frames for controller in score.final_controllers]))
-

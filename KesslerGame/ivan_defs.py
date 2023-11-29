@@ -10,10 +10,10 @@ def time_to_col(ast_x, ast_y, ast_v_x, ast_v_y, space_x, space_y, space_v_x, spa
     time = np.subtract([ast_x,ast_y],[space_x,space_y])/np.subtract([ast_v_x,ast_v_y],[space_v_x,space_v_y]) 
     return time
         
-def relative_pos(ast_x, ast_y, ast_v_x, ast_v_y, space_x, space_y, space_v_x, space_v_y):
+def relative_pos(ast_x, ast_y, ast_v_x, ast_v_y, space_x, space_y, space_v_x, space_v_y,ast_size):
     # Calculate relative position vector
-    relative_pos_x = space_x - ast_x
-    relative_pos_y = space_y - ast_y
+    relative_pos_x = space_x+20 - ast_x+ast_size
+    relative_pos_y = space_y+20 - ast_y+ast_size
     # Calculate relative velocity components
     relative_vel_x = space_v_x - ast_v_x
     relative_vel_y = space_v_y - ast_v_y
