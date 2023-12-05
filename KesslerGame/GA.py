@@ -1,4 +1,5 @@
 from EasyGA import EasyGA
+from EasyGA.structure import Chromosome
 import random
 import time
 from src.kesslergame import Scenario, KesslerGame, GraphicsType,TrainerEnvironment
@@ -6,6 +7,7 @@ from scottdickcontroller import ScottDickController
 from ivancontroller_copy import IvanControllercopy
 from ivancontroller import IvanController
 from YashController import YashController
+from yash_utils import write_list_to_file, read_list_from_file
 from KavishController import KavishController
 from test_controller import TestController
 from graphics_both import GraphicsBoth
@@ -39,13 +41,14 @@ def fitness(chromosome) :
     # print('Accuracy: ' + str([team.accuracy for team in score.teams]))
     # print('Mean eval time: ' + str([team.mean_eval_time for team in score.teams]))
     # print('Evaluated frames: ' + str([controller.eval_frames for controller in score.final_controllers]))
+    # print('asteroids: ' + str(my_test_scenario.max_asteroids))
 
     eval_time = time.perf_counter()-pre
     asteroids_hit = [team.asteroids_hit for team in score.teams]
     accuracy = [team.accuracy for team in score.teams]
-    print('score: ' + str(eval_time + asteroids_hit[0] + accuracy[0]))
+    print('score: ' + str((eval_time/100) + (asteroids_hit[0]/my_test_scenario.max_asteroids) + accuracy[0]))
 
-    return eval_time + asteroids_hit[0] + accuracy[0]
+    return (eval_time/100) + (asteroids_hit[0]/my_test_scenario.max_asteroids) + accuracy[0]
 
 def generate_chromosome():
     bullet_time_s = random.uniform(0, 2)
@@ -122,12 +125,16 @@ def generate_chromosome():
 ga = EasyGA.GA()
 
 ga.chromosome_length = 1
-ga.population_size = 10
+ga.population_size = 1
 ga.gene_impl = lambda: generate_chromosome()
 ga.target_fitness_type = 'max'
-ga.generation_goal = 100
+ga.generation_goal = 1
 ga.fitness_function_impl = fitness
 
 ga.evolve()
 
 ga.print_best_chromosome()
+best_chromsome = ga.population[0]
+write_list_to_file("best_chromosome.pk1", best_chromsome.gene_value_list)
+print(read_list_from_file("best_chromosome.pk1"))
+print(Chromosome(read_list_from_file("best_chromosome.pk1")))
