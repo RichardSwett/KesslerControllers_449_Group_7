@@ -2,8 +2,8 @@ from EasyGA import EasyGA
 from EasyGA.structure import Chromosome
 import time
 from src.kesslergame import Scenario, GraphicsType,TrainerEnvironment
-from KesslerControllers_449_Group_7.KesslerGame.Controller_Defs import write_list_to_file, read_list_from_file
-from KesslerControllers_449_Group_7.KesslerGame.FuzzyController import KavishController
+from Controller_Defs import write_list_to_file, read_list_from_file
+from FuzzyController import GroupSevenController
 import numpy as np
 
 def fitness(chromosome) :
@@ -26,7 +26,7 @@ def fitness(chromosome) :
     game = TrainerEnvironment(settings=game_settings)  # Use this for max-speed, no-graphics simulation
 
     pre = time.perf_counter()
-    score, perf_data = game.run(scenario=my_test_scenario, controllers = [KavishController(chromosome=chromosome)])
+    score, perf_data = game.run(scenario=my_test_scenario, controllers = [GroupSevenController(chromosome=chromosome)])
 
     eval_time = time.perf_counter()-pre
     asteroids_hit = [team.asteroids_hit for team in score.teams]
@@ -70,10 +70,10 @@ def generate_chromosome():
 ga = EasyGA.GA()
 
 ga.chromosome_length = 1
-ga.population_size = 50
+ga.population_size = 1
 ga.gene_impl = lambda: generate_chromosome()
 ga.target_fitness_type = 'max'
-ga.generation_goal = 10
+ga.generation_goal = 1
 ga.fitness_function_impl = fitness
 
 ga.evolve()
