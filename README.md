@@ -1,3 +1,4 @@
 This is the submission for Group 7 on 2023-12-08. 
-We have two seperate controllers, one for the EasyGA generation tuning and one with the final values we had received from this tuning.
-When the GA generations are run it will place the best chromosones in the pk1 file.
+For the first generation before running Controller_GA.py, the scenario file will run the controller using the defualt values that our team had found to be the best chromosome.
+After running Controller_GA.py, the pk1 file will update with the new best chromosome value. Which will be used next time once the pk1 file is created.
+
